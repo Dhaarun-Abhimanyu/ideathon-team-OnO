@@ -3,6 +3,11 @@ import ChatWindow from '../components/ChatWindow';
 import InputBox from '../components/InputBox';
 import './styles.css';
 import { useLocation } from 'react-router-dom';
+
+const API_BASE_URL = import.meta.env.DEV
+    ? ''
+    : (import.meta.env.VITE_API_URL || 'https://ideathon-team-ono.onrender.com');
+
 const Chat = () => {
     const [messages, setMessages] = useState([]);
     const[isLoading, setIsLoading] = useState(false);
@@ -19,7 +24,7 @@ const Chat = () => {
         setIsLoading(true);
         try {
             // Send the message to the backend and get the bot's response
-            const response = await fetch('/gemini', {
+            const response = await fetch(`${API_BASE_URL}/gemini`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
