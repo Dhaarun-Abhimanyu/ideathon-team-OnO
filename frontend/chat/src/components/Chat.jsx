@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import InputBox from '../components/InputBox';
 import './styles.css';
@@ -35,7 +35,7 @@ const Chat = () => {
 
                 // Play the audio if it exists
                 if (json.audio) {
-                    const audio = new Audio(`data:audio/wav;base64,${json.audio}`);
+                    const audio = new Audio(`data:audio/mpeg;base64,${json.audio}`);
                     audio.play()
                         .catch(error => {
                             console.error('Audio playback error:', error);

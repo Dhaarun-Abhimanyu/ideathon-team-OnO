@@ -1,4 +1,4 @@
-const { ElevenLabsClient, play} = require('elevenlabs')
+const { ElevenLabsClient } = require('elevenlabs')
 require('dotenv').config()
 
 const elevenlabs = new ElevenLabsClient({
@@ -6,13 +6,12 @@ const elevenlabs = new ElevenLabsClient({
 });
 
 
-const generateGeminiAudio = async (generated_text, voice) => {
+const generateGeminiAudio = async (generated_text, voiceId) => {
     try {
-        const audioStream = await elevenlabs.generate({
-            voice: voice,
+        const audioStream = await elevenlabs.textToSpeech.convertAsStream(voiceId, {
             text: generated_text,
-            model_id: "eleven_multilingual_v2",
-            stream: true
+            model_id: process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2",
+            output_format: "mp3_44100_128"
         });
 
         const chunks = [];

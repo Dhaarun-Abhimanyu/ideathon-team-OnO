@@ -1,26 +1,15 @@
 require('dotenv').config()
-const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai")
-const { GoogleGenerativeAI } = require("@google/generative-ai")
+const Groq = require("groq-sdk")
 const {
   generateGeminiAudio,
 } = require('../controllers/elevenlabsController')
 const charactersArray = require('../data/character')
 
 
-const safetySettings = [
-    {
-      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-      threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-      threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-    },
-  ]
-
-//Gemini required stuff
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings})
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const model = process.env.GROQ_MODEL || "openai/gpt-oss-20b"
+const defaultVoiceId = process.env.ELEVENLABS_DEFAULT_VOICE_ID || "SOYHLrjzK2X1ezoPC6cr"
+const veluNachiyarVoiceId = process.env.ELEVENLABS_VELUNACHIYAR_VOICE_ID || "EXAVITQu4vr4xnSDxMaL"
 
 let conversationHistory = []
 
@@ -30,9 +19,9 @@ const generateContent = async(req,res) => {
         const user_event = req.body.event
         const user_lang = req.body.lang
 
-        var voice = "Arnold"
+        let voiceId = defaultVoiceId
         if(user_event == "Velunachiyar")
-          voice = "Grace"
+          voiceId = veluNachiyarVoiceId
 
         const characterData = charactersArray.find(characterObj => characterObj.character === user_event)
         const character_prompt = characterData ? characterData.prompt : "Character not found"
@@ -52,14 +41,20 @@ const generateContent = async(req,res) => {
                         The conversation also keeps history, which ill be attaching below
                         But you dont have to worry about that, just keep the conversation going(so dont add stuff like "user": or "your name", or the conversation history)
                         Now, let's start the conversation.` + conversationHistory.join("\n")
-        const result = await model.generateContent(prompt)
-        const response = await result.response
-        const text = await response.text();
+        const response = await groq.chat.completions.create({
+          model,
+          messages: [{ role: "user", content: prompt }],
+        })
+        const text = response.choices[0]?.message?.content
+
+        if (!text) {
+          throw new Error("Groq returned an empty response")
+        }
         
         conversationHistory.push(text)
         console.log(user_event);
 
-        const audioBase64 = await generateGeminiAudio(text, voice);
+        const audioBase64 = await generateGeminiAudio(text, voiceId);
 
         res.status(200).send({
           msg: text,
